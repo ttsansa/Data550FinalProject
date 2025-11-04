@@ -1,0 +1,91 @@
+---
+title: "Final Project"
+author: "Chishan Sha"
+date: "2025-9-30"
+output: html_document
+---
+##Introduction 
+I use the CDC file “Hypertension in adults age 20 and older, by selected characteristics (U.S.)”. It reports population-level hypertension prevalence for U.S. adults aged 20+, broken out by age group, sex, and race/ethnicity across multiple survey years. The dataset is public and may include suppressed or missing cells.
+My goals are to describe overall trends in hypertension prevalence over time and compare key subgroups to highlight potential disparities. The report will present one formatted table and one figure, each with a short description, focusing on a clean and reproducible summary.
+
+##Packages
+```{r}
+library(tidyverse)
+library(readr)
+library(ggplot2)
+library(gtsummary)
+library(stringr)
+```
+
+##Import Data
+```{r}
+raw <- read_csv("Downloads/Data550Finalproject.csv", show_col_types = FALSE)
+raw_data <- raw
+names(raw_data)
+```
+
+##Data clean
+```{r}
+clean_data <- raw_data %>%
+  rename(
+    year           = TIME_PERIOD,
+    dimension      = GROUP,
+    category       = SUBGROUP,
+    prevalence_pct = ESTIMATE
+  ) %>%
+  mutate(prevalence_pct = suppressWarnings(as.numeric(prevalence_pct))) %>%
+  filter(!is.na(prevalence_pct))
+data_sex <- clean_data %>%
+  
+  filter(dimension == "Sex") %>%         
+  mutate(
+    sex = case_when(
+      str_to_lower(category) %in% c("male","m")   ~ "Male",
+      str_to_lower(category) %in% c("female","f") ~ "Female",
+      TRUE ~ as.character(category)
+    )
+  ) %>%
+  select(year, sex, prevalence_pct)
+```
+
+##table 
+```{r}
+tbl_sex <- data_sex %>%
+  select(sex, prevalence_pct) %>%
+  tbl_summary(
+    by = sex,
+    label = list(prevalence_pct ~ "Hypertension prevalence (%)"),
+    type  = list(prevalence_pct ~ "continuous"),
+    statistic = list(prevalence_pct ~ "{mean} ({sd})"),
+    missing = "no"
+  ) %>%
+  add_overall(last = TRUE) %>%
+  add_p(test = all_continuous() ~ "t.test") %>%
+  modify_header(label ~ "**Measure**") %>%
+  modify_caption("**Table 1. Hypertension prevalence (mean ± SD) by sex**")
+
+tbl_sex
+```
+Table 1 reports the mean (SD) hypertension prevalence for males and females across survey years. Males have a higher average prevalence than females (49.1% vs 41.6%, difference ≈ 7.5 percentage points), and the Welch t-test p-value is <0.001.
+
+##Figure
+```{r}
+tab_year_sex <- data_sex %>%
+  mutate(
+    year_num = suppressWarnings(as.numeric(stringr::str_extract(as.character(year), "\\d{4}")))
+  ) %>%
+  filter(!is.na(year_num), !is.na(prevalence_pct), !is.na(sex)) %>%
+  group_by(year_num, sex) %>%
+  summarize(mean_prevalence = mean(prevalence_pct, na.rm = TRUE), .groups = "drop")
+
+ggplot(tab_year_sex, aes(x = year_num, y = mean_prevalence, color = sex, group = sex)) +
+  geom_line(aes(linetype = sex), linewidth = 1) +
+  geom_point(aes(shape = sex), size = 2) +
+  labs(
+    title = "Hypertension prevalence over time by sex",
+    x = "Year",
+    y = "Prevalence (%)",
+    color = "Sex", linetype = "Sex", shape = "Sex"
+  )
+```
+Hypertension prevalence is higher in males than females across all years, with a gap of about 6 to 8 percentage points. Female prevalence increases from the 1990s; male prevalence stays high with a small dip in the mid-2000s and a jump in the most recent year. Overall, the trend is upward for both groups.
