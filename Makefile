@@ -1,3 +1,5 @@
+install:
+	Rscript -e "if (!requireNamespace('renv', quietly = TRUE)) install.packages('renv'); renv::restore()"
 
 reports/final_report.html: reports/final_report.Rmd R/01_clean.R data/raw/Data550Finalproject.csv
 	Rscript R/01_clean.R
@@ -12,3 +14,10 @@ derived_data:
 clean:
 	rm -f reports/final_report.html
 
+.PHONY: docker_build
+docker_build:
+	docker build -t data550_final .
+
+.PHONY: docker_report
+docker_report:
+	docker run -v "$$(pwd)/report":/home/rstudio/project/report data550_final

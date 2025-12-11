@@ -80,7 +80,7 @@ tab_year_sex <- data_sex %>%
   summarize(mean_prevalence = mean(prevalence_pct, na.rm = TRUE), .groups = "drop")
 
 ggplot(tab_year_sex, aes(x = year_num, y = mean_prevalence, color = sex, group = sex)) +
-  geom_line(aes(linetype = sex), size = 1) +   # ← 只改这一处
+  geom_line(aes(linetype = sex), size = 1) +   
   geom_point(aes(shape = sex), size = 2) +
   labs(
     title = "Hypertension prevalence over time by sex",

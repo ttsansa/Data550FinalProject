@@ -31,3 +31,9 @@ The goal of the project is to analyze hypertension prevalence using the provided
 `Makefile`
 - run cleaning script and render final report  
 - save compiled HTML report in `reports/` folder  
+
+`Docker`
+- docker build -t data550_final .
+- docker run -v "$(pwd)/report":/home/rstudio/project/report data550_final
+
+- save compiled HTML report in `reports/` folder  
