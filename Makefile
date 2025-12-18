@@ -14,10 +14,10 @@ derived_data:
 clean:
 	rm -f reports/final_report.html
 
-.PHONY: docker_build
-docker_build:
-	docker build -t data550_final .
+# Docker image on Docker Hub
+DOCKER_IMAGE = chishan0629/data550finalproject:latest
 
 .PHONY: docker_report
 docker_report:
-	docker run -v "$$(pwd)/report":/home/rstudio/project/report data550_final
+	docker run --rm -v "$$(pwd)/report":/home/rstudio/project/report $(DOCKER_IMAGE)
+
